@@ -1,0 +1,18 @@
+ros2_ws/build/
+ros2_ws/install/
+ros2_ws/log/
+**/__pycache__/
+*.pyc
+demo/outputs/frame_*.jpg
+demo/outputs/latest_index.txt
+demo/ros2_outputs/*
+!demo/ros2_outputs/.gitkeep
+
+# Dataset + training artefacts (large; do not commit).
+dataset/
+runs/
+sim/runtime/spawned_*.json
+vision/.venv-train/
+*.pt
+!yolov8n.pt
+!ros2_ws/yolov8n.pt

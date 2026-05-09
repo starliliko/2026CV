@@ -1,101 +1,111 @@
-# 2026CV
-# 课堂大作业提交方式
+# 2026CV Low-Altitude Target Recognition
 
-以第一组为例子，组长创建目录Group01，然后上传代码、文档和ppt，命名方式如下：
+## Project Overview
 
-Group01/code: 完整代码+运行说明文档
+This project focuses on low-altitude target recognition in UAV scenarios.
 
-Group01/document：2026CV_G01_汇报总结.PPTX + 2026CV_G01_学号_姓名_大作业.docx
+Current main route:
 
-（word文档含章节目录，尽可能详尽覆盖ppt汇报的内容和代码说明的内容，鼓励有些新想法。ppt文档里包含组员分工和贡献说明。）
+```text
+PX4 + Gazebo Harmonic + QGroundControl + ROS 2 + Python + OpenCV + YOLOv8
+```
 
-截止提交时间：6/30 24:00     
+The project is organized to support two goals:
 
-#  课堂作业汇报时间节点
- 
-第一次大作业（  03/23 ）
+1. Full system reproduction
+2. Vision algorithm reproduction
+3. ROS 2 integration and perception pipeline reproduction
 
-   演示系统搭建
+## Repository Structure
 
-第二次大作业（  04/20 ）
+```text
+.
+├─ docs/
+│  ├─ README.md
+│  ├─ ROS2_RUNBOOK.md
+│  ├─ ROS2_RESUME_PLAN.md
+│  └─ SIM_TRAINING_PIPELINE.md      # spawn → collect → train → deploy
+├─ sim/
+│  ├─ README.md
+│  ├─ configs/target_models.yaml    # YOLO classes + Fuel models
+│  ├─ launch/spawn_targets.py       # randomise targets in baylands
+│  ├─ missions/random_waypoints.py  # MAVSDK random-waypoint flight
+│  └─ runtime/                      # generated spawn manifests
+├─ ros2_ws/
+│  ├─ README.md
+│  └─ src/
+│     └─ low_altitude_bringup/
+├─ vision/
+│  ├─ README.md
+│  ├─ requirements.txt
+│  ├─ requirements-train.txt        # Windows training venv
+│  ├─ setup_train_env.ps1           # CUDA 12.1 + ultralytics installer
+│  ├─ train_sim.py                  # YOLOv8s fine-tune entry point
+│  ├─ summarize_results.py          # JSONL → Markdown report
+│  ├─ Dockerfile
+│  ├─ run_detection.py
+│  └─ dataset/
+│     ├─ projection.py              # 3D AABB → 2D bbox
+│     ├─ build_yolo_dataset.py      # train/val split + dataset.yaml
+│     └─ test_projection.py
+├─ demo/
+│  ├─ README.md
+│  ├─ test_images/
+│  ├─ outputs/
+│  └─ demo_video/
+├─ scripts/
+│  └─ run_demo.sh
+├─ PROJECT_PROGRESS.md
+├─ PRESENTATION_SCRIPT.md
+├─ REPORT_SHARED_DEMO.md
+└─ README.md
+```
 
-   1、研究现状
+## Current Status
 
+Completed:
 
-  2、问题定义
+1. WSL2 + Ubuntu 22.04 environment setup
+2. PX4 v1.16.0 setup
+3. Gazebo Harmonic setup
+4. `px4_sitl gz_x500` startup
+5. QGroundControl connection
+6. ROS 2 Humble workspace scaffold and build validation
 
+Next:
 
-  3、数据采集
+1. Bridge Gazebo camera topics into ROS 2
+2. Connect YOLOv8 as a ROS 2 perception node
+3. Add PX4 ROS 2 interfaces and control logic
 
-  
-第三次大作业（  05/18 ）
+## Quick Links
 
- 
-  4、算法模块
+- Project documents are indexed in [docs/README.md](./docs/README.md).
+- ROS 2 workspace notes live in [ros2_ws/README.md](./ros2_ws/README.md).
+- ROS 2 runtime notes live in [docs/ROS2_RUNBOOK.md](./docs/ROS2_RUNBOOK.md).
+- **Sim → train → deploy pipeline**: [docs/SIM_TRAINING_PIPELINE.md](./docs/SIM_TRAINING_PIPELINE.md).
+- Project progress: [PROJECT_PROGRESS.md](./PROJECT_PROGRESS.md).
+- Presentation script: [PRESENTATION_SCRIPT.md](./PRESENTATION_SCRIPT.md).
 
- 
- 
-  
-第四次大作业（  06/08 ）
+## Real-time Detection Demo
 
-  
-  5、原型系统
+From WSL Ubuntu 22.04 (PX4 SITL must already be running):
 
+```bash
+bash scripts/run_demo.sh
+```
 
-  6、实验结果
-  
--------------------------------------------------------------
+This launches a 3-process pipeline: `parameter_bridge` (clock), `gz_camera_bridge`
+(image), and `yolo_detector` (inference + HUD overlay + rich dashboard, all in
+one process). View the annotated stream with
+`ros2 run rqt_image_view rqt_image_view /camera/annotated`.
 
-大家可以直接用组号建立目录，然后在相应的目录下工作。
+## Reproduction Strategy
 
-# 2026CV 可供选择任务：
+This repository supports two reproduction paths:
 
-1.多模态情感识别：基于视觉+音频模态，拓展识别的情绪类别，在MER2025/IEMOCAP 上测试最新算法；
+1. Full reproduction
+   Set up WSL2, PX4, Gazebo Harmonic, and QGroundControl, then run the complete UAV simulation workflow.
 
-2.工业器件识别：在机械臂抓取过程中识别常见工业器件，输出6D参数，包括位置和三维朝向等
-
-2.视线跟踪：在视线估计gaze estimation基础上，实现视觉注意跟踪，记录注视点、注视持续时间、首次注视时长及视线转移模式等
-
-3.长时微表情识别：在相对比较长的时间里（比如10分钟），对人脸的微表情进行时空分析，或者统计分析，对人的情绪做判断
-
-4.特定物体识别：病理图像识别，从当前任务扩展到细胞检测和计数，进一步区分正常细胞和病变细胞
-
-5.场景人流检测：移动摄像头场景下特定人群的检测和计数，扩展到无人机航拍场景下的人体识别与计数
-
-6.人体动作识别：复杂康复动作的识别，包括典型康复动作的理解、动作规范性检测和动作计数
-
-7.显著物体检测：无精确标注情况下的显著物体检测问题，扩展到弱监督学习和自监督学习方法
-
-8.低空目标识别：针对低空经济的无人机视觉传感设备，在快速和相对远的距离测试和实现视觉识别算法
-
-
-
-#  分组+选题：
-
-	 组长	  组员                            任务编号
-1	XXX			XXX、XXX  						4
-
-
-
- 
-
-#  参考链接
-
-yolov7带tracker的仓库: https://github.com/JackWoo0831/Yolov7-tracker
-
-yolo v8: https://github.com/ultralytics/ultralytics?tab=readme-ov-file
-
-yolo v8也提供人体关节点的识别：https://docs.ultralytics.com/tasks/pose/#dataset-format
-
-
-显著物体检测：https://paperswithcode.com/task/salient-object-detection 
-
-人体动作识别：https://github.com/liutiel/AICoacher
-
-车道线检测：https://github.com/liuruijin17/LSTR
-
-疲劳度检测：见目录下代码
-
-机器人定位导航：http://wiki.ros.org/cn
-
-Adaboost： https://cloud.tencent.com/developer/article/17
+2. Vision-only reproduction
+   Use the `vision/` folder to reproduce the detection environment and algorithm results independently.
