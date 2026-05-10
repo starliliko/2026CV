@@ -35,8 +35,8 @@ ros2_ws/
 ## Build
 
 ```bash
-source /opt/ros/humble/setup.bash
-cd /mnt/d/2026CV/ros2_ws
+source /opt/ros/jazzy/setup.bash
+cd /home/libo/2026CV/ros2_ws
 colcon build
 source install/setup.bash
 ```
@@ -72,7 +72,7 @@ ros2 launch low_altitude_bringup perception_yolo.launch.py \
 The detector writes snapshots into:
 
 ```text
-/mnt/d/2026CV/demo/ros2_outputs
+/home/libo/2026CV/demo/ros2_outputs
 ```
 
 ## Notes

@@ -147,11 +147,12 @@ class YoloDetector(Node):
         self.declare_parameter("model_path", "yolov8n.pt")
         self.declare_parameter("confidence", 0.25)
         self.declare_parameter("device", "")
-        self.declare_parameter("report_every_n_frames", 5)
+        self.declare_parameter("report_every_n_frames", 1)
+        self.declare_parameter("imgsz", 480)
         self.declare_parameter("publish_annotated", True)
         self.declare_parameter("save_annotated", False)
         self.declare_parameter("save_every_n_frames", 30)
-        self.declare_parameter("annotated_dir", "/mnt/d/2026CV/demo/ros2_outputs")
+        self.declare_parameter("annotated_dir", "/home/libo/2026CV/demo/ros2_outputs")
         self.declare_parameter("publish_startup_status", True)
         self.declare_parameter("heartbeat_interval_sec", 5.0)
         self.declare_parameter("log_every_n_status", 1)
@@ -161,7 +162,7 @@ class YoloDetector(Node):
         self.declare_parameter("dashboard_refresh_hz", 2.0)
         self.declare_parameter("window_size", 30)
         self.declare_parameter("record_results", True)
-        self.declare_parameter("results_dir", "/mnt/d/2026CV/demo/ros2_outputs")
+        self.declare_parameter("results_dir", "/home/libo/2026CV/demo/ros2_outputs")
         self.declare_parameter("summary_interval_sec", 5.0)
 
     def _read_parameters(self) -> None:
@@ -173,6 +174,7 @@ class YoloDetector(Node):
         self._confidence = float(gp("confidence").value)
         self._device = str(gp("device").value)
         self._report_every_n_frames = max(1, int(gp("report_every_n_frames").value))
+        self._imgsz = max(160, int(gp("imgsz").value))
         self._publish_annotated = bool(gp("publish_annotated").value)
         self._save_annotated = bool(gp("save_annotated").value)
         self._save_every_n_frames = max(1, int(gp("save_every_n_frames").value))
@@ -265,6 +267,7 @@ class YoloDetector(Node):
                 source=frame.rgb,
                 conf=self._confidence,
                 device=self._device or None,
+                imgsz=self._imgsz,
                 verbose=False,
             )[0]
         except Exception as exc:  # pragma: no cover

@@ -38,8 +38,9 @@ The project is organized to support two goals:
 ├─ vision/
 │  ├─ README.md
 │  ├─ requirements.txt
-│  ├─ requirements-train.txt        # Windows training venv
-│  ├─ setup_train_env.ps1           # CUDA 12.1 + ultralytics installer
+│  ├─ requirements-train.txt        # 训练 venv 依赖清单（Windows）
+│  ├─ setup_train_env.ps1           # Windows 训练 venv（PyTorch CUDA 12.1）
+│  ├─ setup_infer_env.sh            # Linux 推理 venv（CPU 默认 / CUDA 可选）
 │  ├─ train_sim.py                  # YOLOv8s fine-tune entry point
 │  ├─ summarize_results.py          # JSONL → Markdown report
 │  ├─ Dockerfile
@@ -57,20 +58,24 @@ The project is organized to support two goals:
 │  └─ run_demo.sh
 ├─ PROJECT_PROGRESS.md
 ├─ PRESENTATION_SCRIPT.md
-├─ REPORT_SHARED_DEMO.md
 └─ README.md
 ```
 
 ## Current Status
 
+Project now runs entirely on **native Ubuntu 24.04** (migrated from
+`Windows 11 + WSL2`). Project root is `/home/libo/2026CV`, PX4 source is at
+`~/PX4/PX4-Autopilot`, ROS 2 distro is **Jazzy**, and Python ML/CV code is
+isolated inside the `vision/.venv-train` virtualenv.
+
 Completed:
 
-1. WSL2 + Ubuntu 22.04 environment setup
-2. PX4 v1.16.0 setup
-3. Gazebo Harmonic setup
-4. `px4_sitl gz_x500` startup
-5. QGroundControl connection
-6. ROS 2 Humble workspace scaffold and build validation
+1. Native Ubuntu 24.04 environment
+2. PX4 v1.16.0 source at `~/PX4/PX4-Autopilot`
+3. Gazebo Harmonic (gz sim 8.x) installed
+4. `px4_sitl gz_x500` startup verified previously under WSL
+5. QGroundControl connection verified previously under WSL
+6. ROS 2 Jazzy workspace scaffold (rebuild required after migration)
 
 Next:
 
@@ -89,9 +94,11 @@ Next:
 
 ## Real-time Detection Demo
 
-From WSL Ubuntu 22.04 (PX4 SITL must already be running):
+On native Ubuntu 24.04 (PX4 SITL must already be running):
 
 ```bash
+# 一次性激活 ROS + venv（推荐放进 ~/.bashrc）
+source scripts/activate_env.sh
 bash scripts/run_demo.sh
 ```
 
@@ -105,7 +112,23 @@ one process). View the annotated stream with
 This repository supports two reproduction paths:
 
 1. Full reproduction
-   Set up WSL2, PX4, Gazebo Harmonic, and QGroundControl, then run the complete UAV simulation workflow.
+   Set up native Ubuntu, PX4, Gazebo Harmonic, and QGroundControl, then run the complete UAV simulation workflow.
 
 2. Vision-only reproduction
    Use the `vision/` folder to reproduce the detection environment and algorithm results independently.
+
+## Migration notes (Windows/WSL → native Ubuntu)
+
+- All hardcoded `/mnt/d/2026CV` and `D:\2026CV` paths now point to
+  `/home/libo/2026CV`.
+- Default ROS distro switched from `humble` (22.04) to `jazzy` (24.04).
+- **Hybrid training/inference split**: the Linux install currently boots
+  inside a VirtualBox VM, which does not expose the host RTX 4050 (no GPU
+  PCIe passthrough). YOLOv8 **training therefore stays on Windows** via
+  [vision/setup_train_env.ps1](./vision/setup_train_env.ps1) (CUDA 12.1),
+  while the Linux side keeps a CPU-only **inference** venv via
+  [vision/setup_infer_env.sh](./vision/setup_infer_env.sh). Both create
+  `vision/.venv-train/` on their respective host. The trained `best.pt`
+  is copied into `ros2_ws/` on the Linux side for the ROS 2
+  `yolo_detector` node, which still needs `torch`+`ultralytics` at
+  runtime to load the weights and run forward passes.

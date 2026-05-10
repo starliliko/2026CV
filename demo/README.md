@@ -11,7 +11,7 @@
 
 ## 实时检测 + 监控仪表板
 
-一键启动（在 WSL Ubuntu 22.04 中，PX4 SITL 需先在另一个终端运行）：
+一键启动（在 Ubuntu 24.04 中，PX4 SITL 需先在另一个终端运行）：
 
 ```bash
 bash ../scripts/run_demo.sh

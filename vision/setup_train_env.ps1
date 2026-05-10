@@ -13,6 +13,15 @@
     Re-running is safe — the venv is reused. Pass -Recreate to nuke and
     rebuild it.
 
+    Why training is on Windows (not the Linux moving disk):
+    - The Ubuntu install on the portable drive currently boots inside a
+      VirtualBox VM. VirtualBox does not support NVIDIA GPU passthrough,
+      so `nvidia-smi` is unavailable and PyTorch falls back to CPU even
+      though the host has an RTX 4050. Training YOLOv8s on CPU is too
+      slow for the project schedule, so we keep training on Windows
+      native and copy the resulting weights back into the Linux ROS 2
+      pipeline for inference.
+
 .PARAMETER Python
     Path to the system Python interpreter to use as the venv base. Defaults
     to whatever `py -3.11` resolves to (Ultralytics + torch wheels are most
@@ -25,7 +34,7 @@
     pwsh -File vision/setup_train_env.ps1
 
 .EXAMPLE
-    pwsh -File vision/setup_train_env.ps1 -Recreate -Python "C:\Python311\python.exe"
+    pwsh -File vision/setup_train_env.ps1 -Recreate -Python "C:\\Python311\\python.exe"
 #>
 
 [CmdletBinding()]
@@ -82,8 +91,8 @@ Write-Host "Upgrading pip / wheel"
 & $venvPython -m pip install --upgrade pip wheel --quiet
 
 Write-Host "Installing PyTorch (CUDA 12.1 wheels) — this may take a while"
-& $venvPython -m pip install `
-    --index-url https://download.pytorch.org/whl/cu121 `
+& $venvPython -m pip install ``
+    --index-url https://download.pytorch.org/whl/cu121 ``
     "torch==2.3.1" "torchvision==0.18.1"
 
 Write-Host "Installing remaining requirements"
@@ -106,4 +115,4 @@ Write-Host ""
 Write-Host "Done. Activate the env with:"
 Write-Host "    $venv\Scripts\Activate.ps1"
 Write-Host "Then train with e.g.:"
-Write-Host "    python vision\train_sim.py --data D:\2026CV\dataset\sim_v1\dataset.yaml"
+Write-Host "    python vision\train_sim.py --data <path-to-dataset.yaml>"

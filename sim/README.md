@@ -20,7 +20,7 @@ sim/
 
 ```bash
 # 1. 启动 PX4 SITL（Gazebo baylands）
-cd ~/PX4-Autopilot
+cd ~/PX4/PX4-Autopilot
 PX4_GZ_WORLD=baylands make px4_sitl gz_x500_gimbal
 
 # 2. 在 Gazebo 已运行的世界里 spawn 目标
@@ -28,7 +28,7 @@ python3 sim/launch/spawn_targets.py --world baylands --seed 42
 
 # 3. 启动数据采集
 ros2 launch low_altitude_bringup dataset_collect.launch.py \
-    output_dir:=/mnt/d/2026CV/dataset/sim_v1 target_total_frames:=5000
+    output_dir:=/home/libo/2026CV/dataset/sim_v1 target_total_frames:=5000
 
 # 4. 让无人机随机巡飞 ~40 分钟
 python3 sim/missions/random_waypoints.py --duration 2400 --seed 7

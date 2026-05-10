@@ -38,16 +38,19 @@ def generate_launch_description() -> LaunchDescription:
         ],
     )
 
+    # 用 ros_gz_bridge 直接桥接 Gazebo 相机话题到 ROS,
+    # 取代旧的 low_altitude_bringup/gz_camera_bridge (Python),
+    # 更稳定且零额外依赖.
     image_bridge_node = Node(
-        package="low_altitude_bringup",
-        executable="gz_camera_bridge",
+        package="ros_gz_bridge",
+        executable="parameter_bridge",
         name="gazebo_camera_bridge",
         output="screen",
-        parameters=[
-            {
-                "gz_image_topic": LaunchConfiguration("gz_image_topic"),
-                "image_topic": LaunchConfiguration("image_topic"),
-            }
+        arguments=[
+            [LaunchConfiguration("gz_image_topic"), "@sensor_msgs/msg/Image[gz.msgs.Image"],
+        ],
+        remappings=[
+            (LaunchConfiguration("gz_image_topic"), LaunchConfiguration("image_topic")),
         ],
     )
 

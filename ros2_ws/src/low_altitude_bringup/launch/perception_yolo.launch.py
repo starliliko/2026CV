@@ -3,6 +3,7 @@ from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
 from launch_ros.substitutions import FindPackageShare
 
 
@@ -22,12 +23,20 @@ def generate_launch_description() -> LaunchDescription:
         default_value="/world/baylands/model/x500_gimbal_0/link/camera_link/sensor/camera/image",
     )
     model_path_arg = DeclareLaunchArgument("model_path", default_value="yolov8n.pt")
-    confidence_arg = DeclareLaunchArgument("confidence", default_value="0.25")
+    confidence_arg = DeclareLaunchArgument("confidence", default_value="0.15")
     report_every_n_frames_arg = DeclareLaunchArgument(
-        "report_every_n_frames", default_value="5"
+        "report_every_n_frames", default_value="1"
+    )
+    imgsz_arg = DeclareLaunchArgument(
+        "imgsz", default_value="480",
+        description="YOLO inference image size (smaller=faster, e.g. 320/416/480/640).",
+    )
+    device_arg = DeclareLaunchArgument(
+        "device", default_value="",
+        description="Ultralytics device. '' = auto, '0' = first GPU, 'cpu' = force CPU.",
     )
     annotated_dir_arg = DeclareLaunchArgument(
-        "annotated_dir", default_value="/mnt/d/2026CV/demo/ros2_outputs"
+        "annotated_dir", default_value="/home/libo/2026CV/demo/ros2_outputs"
     )
     heartbeat_interval_sec_arg = DeclareLaunchArgument(
         "heartbeat_interval_sec", default_value="5.0"
@@ -55,7 +64,7 @@ def generate_launch_description() -> LaunchDescription:
         description="Append per-frame detections to JSONL and refresh summary.json.",
     )
     results_dir_arg = DeclareLaunchArgument(
-        "results_dir", default_value="/mnt/d/2026CV/demo/ros2_outputs",
+        "results_dir", default_value="/home/libo/2026CV/demo/ros2_outputs",
         description="Directory where detections.jsonl and summary.json are written.",
     )
     summary_interval_sec_arg = DeclareLaunchArgument(
@@ -87,8 +96,9 @@ def generate_launch_description() -> LaunchDescription:
                 "annotated_image_topic": LaunchConfiguration("annotated_image_topic"),
                 "model_path": LaunchConfiguration("model_path"),
                 "confidence": LaunchConfiguration("confidence"),
-                "device": "",
+                "device": ParameterValue(LaunchConfiguration("device"), value_type=str),
                 "report_every_n_frames": LaunchConfiguration("report_every_n_frames"),
+                "imgsz": LaunchConfiguration("imgsz"),
                 "publish_annotated": True,
                 "save_annotated": False,
                 "save_every_n_frames": 30,
@@ -116,6 +126,8 @@ def generate_launch_description() -> LaunchDescription:
             model_path_arg,
             confidence_arg,
             report_every_n_frames_arg,
+            imgsz_arg,
+            device_arg,
             annotated_dir_arg,
             heartbeat_interval_sec_arg,
             log_every_n_status_arg,

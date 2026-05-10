@@ -24,10 +24,10 @@ def generate_launch_description() -> LaunchDescription:
     )
     manifest_path_arg = DeclareLaunchArgument(
         "manifest_path",
-        default_value="/mnt/d/2026CV/sim/runtime/spawned_latest.json",
+        default_value="/home/libo/2026CV/sim/runtime/spawned_latest.json",
     )
     output_dir_arg = DeclareLaunchArgument(
-        "output_dir", default_value="/mnt/d/2026CV/dataset/sim_v1"
+        "output_dir", default_value="/home/libo/2026CV/dataset/sim_v1"
     )
     capture_hz_arg = DeclareLaunchArgument("capture_hz", default_value="2.0")
     target_total_frames_arg = DeclareLaunchArgument(

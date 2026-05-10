@@ -44,12 +44,12 @@ YOLOv8 目标检测
 
 ## 三、目前已经完成的工作
 
-### 1. 完成 WSL2 环境搭建
+### 1. 完成 native Ubuntu 环境搭建
 
 已完成内容：
 
-- 在 Windows 11 上安装 `WSL2`
-- 安装 `Ubuntu-22.04`
+- 在 Windows 11 上安装 `native Ubuntu`
+- 安装 `Ubuntu 24.04`
 - 完成 Ubuntu 初始化
 - 配置基础开发环境
 
@@ -65,8 +65,8 @@ YOLOv8 目标检测
 
 迁移结果：
 
-- WSL 发行版：`Ubuntu-22.04`
-- 当前存储位置：`D:\WSL\Ubuntu-22.04`
+- WSL 发行版：`Ubuntu 24.04`
+- 当前存储位置：`D:\WSL\Ubuntu 24.04`
 
 这样做的好处：
 
@@ -108,7 +108,7 @@ YOLOv8 目标检测
 当前源码位置：
 
 ```text
-/home/bo_love/PX4-Autopilot
+/home/libo/PX4/PX4-Autopilot
 ```
 
 ### 5. 完成 PX4 依赖安装
@@ -196,7 +196,7 @@ INFO [commander] Ready for takeoff!
 
 解决：
 
-- 安装 `Ubuntu-22.04`
+- 安装 `Ubuntu 24.04`
 
 ### 2. WSL 占用系统盘空间
 
@@ -264,7 +264,7 @@ INFO [commander] Ready for takeoff!
 
 当前可认为已经完成的阶段：
 
-1. WSL2 + Ubuntu 环境建立
+1. native Ubuntu + Ubuntu 环境建立
 2. PX4 稳定版源码搭建完成
 3. Gazebo Harmonic 仿真环境搭建完成
 4. PX4 SITL 启动成功
@@ -334,3 +334,52 @@ INFO [commander] Ready for takeoff!
 ## 九、总结
 
 目前我们已经完成了低空目标识别项目的基础环境搭建，成功跑通了 `PX4 v1.16.0 + Gazebo Harmonic + QGroundControl` 的无人机仿真系统，下一步将进入仿真相机图像获取与 `YOLOv8` 目标检测接入阶段。
+
+---
+
+## 十、环境迁移：Windows + WSL → 原生 Ubuntu 24.04
+
+> 说明：以上一至九节描述的是项目在 *Windows 11 + WSL2 + Ubuntu 22.04* 阶段的进展，作为历史快照保留。
+
+### 当前运行环境
+
+- 操作系统：原生 Ubuntu 24.04 LTS
+- 项目路径：`/home/libo/2026CV`
+- PX4 源码：`~/PX4/PX4-Autopilot`（已存在）
+- Gazebo：Harmonic（gz sim 8.x，apt 安装）
+- ROS 2：Jazzy（替代原 Humble，因 22.04→24.04）
+- Python ML/CV：使用独立 venv `vision/.venv-train`，与系统 Python 隔离
+
+### 已完成的迁移动作
+
+1. 全仓代码与文档中 `/mnt/d/2026CV`、`D:\2026CV` 路径统一替换为 `/home/libo/2026CV`
+2. 所有 `/opt/ros/humble`、`ros-humble`、`ROS 2 Humble` 替换为 Jazzy
+3. `~/PX4-Autopilot` 路径修正为 `~/PX4/PX4-Autopilot`
+4. 训练 / 推理 venv 拆成两侧：
+   - Linux 推理 venv：`vision/setup_infer_env.sh`（CPU 默认，numpy<2）
+   - Windows 训练 venv：`vision/setup_train_env.ps1`（PyTorch CUDA 12.1）
+5. 代码仓库中的旧 WSL→Windows 共享文件链路脚本与报告（`save_gz_camera_frame.py` / `view_gz_camera.py` / `view_shared_camera_windows.py` / `REPORT_SHARED_DEMO.md`）已在迁移完成后删除
+
+### 为什么训练保留在 Windows、不放到 Linux
+
+本来计划把训练也搬到 Linux 一并完成，但实际操作中发现：
+
+- 当前 Linux 系统装在便携硬盘上、由 VirtualBox 虚拟机引导。
+- VirtualBox 不支持 NVIDIA GPU 的 PCIe passthrough，VM 内既看不到
+  RTX 4050，也装不了 NVIDIA 驱动；`nvidia-smi` 不可用，
+  `torch.cuda.is_available()` 始终返回 False。
+- 用 CPU 训练 yolov8s（5000 张 / 50 epoch）按经验需要十几小时以上，
+  时间成本不可接受。
+
+因此项目维持「Windows 宿主机训练 + Linux 虚拟机推理」的混合形态：
+训练侧用 PowerShell 脚本在 RTX 4050 上微调，得到 `best.pt` 后拷回
+Linux `ros2_ws/`，由 ROS 2 `yolo_detector` 节点（仍需 torch /
+ultralytics 运行时来加载权重做前向）完成实时检测。
+
+### 仍需要在新环境完成的事项
+
+1. 安装 ROS 2 Jazzy + colcon + ros_gz_bridge / ros_gz_image — 已完成
+2. 在 Linux 的 `vision/.venv-train` 中装好推理依赖 — 已完成
+3. 重新 `colcon build` ROS 2 工作区 — 已完成
+4. 把 spawn → 采集 5000 张 → 拷到 Windows 训练 → `best.pt` 拷回 Linux 推理
+   这条全链路在新环境下完整跑一次并出对比报告

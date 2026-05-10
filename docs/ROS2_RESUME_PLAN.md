@@ -89,7 +89,7 @@
 
 ### 描述示例
 
-1. 基于 Ubuntu 22.04 / WSL2 搭建无人机仿真开发环境，完成 `PX4 v1.16 + Gazebo Harmonic + QGroundControl + ROS 2` 的联调。
+1. 基于 Ubuntu 24.04 / native Ubuntu 搭建无人机仿真开发环境，完成 `PX4 v1.16 + Gazebo Harmonic + QGroundControl + ROS 2` 的联调。
 2. 使用 `ros_gz_bridge` 将 Gazebo 相机与仿真时钟桥接到 ROS 2，构建感知节点输入链路。
 3. 基于 `px4_msgs` 与 `uXRCE-DDS Agent` 接入 PX4 飞控状态话题，为 offboard 控制与任务逻辑提供通信基础。
 4. 规划并实现 ROS 2 视觉处理节点，完成仿真图像订阅、目标检测结果发布与实验记录。

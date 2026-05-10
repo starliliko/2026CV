@@ -7,7 +7,7 @@ repository.
 
 The following pieces are in place:
 
-1. `ROS 2 Humble` is installed in `Ubuntu-22.04`
+1. `ROS 2 Jazzy` is installed in `Ubuntu 24.04`
 2. `ros_gz_bridge` is installed for `/clock`
 3. `ros_gz_image` is installed for the Gazebo camera stream
 4. `ros2_ws` builds with `colcon build`
@@ -34,7 +34,7 @@ The Gazebo image stream is bridged separately with `ros_gz_image`.
 ### 1. Start PX4 and Gazebo in WSL
 
 ```bash
-cd ~/PX4-Autopilot
+cd ~/PX4/PX4-Autopilot
 PX4_GZ_WORLD=baylands make px4_sitl gz_x500_gimbal
 ```
 
@@ -56,8 +56,8 @@ If no camera topic appears here, ROS 2 will not receive any image.
 ### 3. Build and source the ROS 2 workspace
 
 ```bash
-source /opt/ros/humble/setup.bash
-cd /mnt/d/2026CV/ros2_ws
+source /opt/ros/jazzy/setup.bash
+cd /home/libo/2026CV/ros2_ws
 colcon build
 source install/setup.bash
 ```
@@ -130,7 +130,7 @@ model=x500_gimbal_0
 Check:
 
 ```bash
-ls /mnt/d/2026CV/demo/ros2_outputs
+ls /home/libo/2026CV/demo/ros2_outputs
 ```
 
 If the directory only contains `.gitkeep`, ROS 2 likely is not receiving images

@@ -6,7 +6,7 @@
 
 这个项目的目标是面向无人机低空飞行场景，研究在远距离、小目标、快速运动条件下的目标识别问题。我们的整体思路不是一开始就直接做算法，而是先把完整的仿真平台搭建起来，再在这个平台上接入视觉识别算法。
 
-目前我们已经完成了项目的第一阶段，也就是基础环境和仿真链路的搭建。具体来说，我们在 Windows 11 环境下，使用 WSL2 搭建了 Ubuntu 22.04 的 Linux 开发环境，并将 WSL 迁移到了 D 盘，解决了系统盘空间占用的问题。
+目前我们已经完成了项目的第一阶段，也就是基础环境和仿真链路的搭建。具体来说，我们在 Windows 11 环境下，使用 native Ubuntu 搭建了 Ubuntu 24.04 的 Linux 开发环境，并将 WSL 迁移到了 D 盘，解决了系统盘空间占用的问题。
 
 在此基础上，我们重新下载并配置了 PX4 飞控源码，最终选用了稳定版 `PX4 v1.16.0`。之所以选择这个版本，是因为它的稳定性更好，而且与 `Gazebo Harmonic` 的兼容性更高，更适合课程项目快速落地。
 
@@ -21,8 +21,8 @@
 在技术栈方面，目前已经实际使用的主要技术包括：
 
 - Windows 11
-- WSL2
-- Ubuntu 22.04
+- native Ubuntu
+- Ubuntu 24.04
 - PX4 v1.16.0
 - Gazebo Harmonic
 - QGroundControl
@@ -49,7 +49,7 @@
 如果现场时间更短，可以按下面这个版本讲：
 
 1. 我们组选题是“低空目标识别”，目标是在无人机低空场景下做目标检测。
-2. 目前已经完成 `WSL2 + Ubuntu + PX4 v1.16.0 + Gazebo Harmonic + QGroundControl` 的环境搭建。
+2. 目前已经完成 `native Ubuntu + Ubuntu + PX4 v1.16.0 + Gazebo Harmonic + QGroundControl` 的环境搭建。
 3. 已经成功启动仿真无人机，并且地面站通信已经打通。
 4. 当前技术栈主要包括 PX4、Gazebo、QGroundControl、Python 和 OpenCV。
 5. 下一步将获取仿真相机图像，并接入 YOLOv8 进行目标检测。

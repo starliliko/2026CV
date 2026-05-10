@@ -4,10 +4,9 @@
 
 1. [项目当前进展汇报](../PROJECT_PROGRESS.md)
 2. [3分钟汇报稿](../PRESENTATION_SCRIPT.md)
-3. [共享演示报告](../REPORT_SHARED_DEMO.md)
-4. [ROS 2 运行手册](./ROS2_RUNBOOK.md)
-5. [ROS 2 进度恢复计划](./ROS2_RESUME_PLAN.md)
-6. [仿真训练 → 部署端到端流程](./SIM_TRAINING_PIPELINE.md)
+3. [ROS 2 运行手册](./ROS2_RUNBOOK.md)
+4. [ROS 2 进度恢复计划](./ROS2_RESUME_PLAN.md)
+5. [仿真训练 → 部署端到端流程](./SIM_TRAINING_PIPELINE.md)
 
 ## 使用建议
 
