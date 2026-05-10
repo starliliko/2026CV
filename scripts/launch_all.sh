@@ -13,7 +13,8 @@
 #   SKIP=2 bash scripts/launch_all.sh          # 每 N 帧推理一次 (默认 1=每帧推理)
 #   DEVICE=0 bash scripts/launch_all.sh        # 强制使用 GPU 0 (默认空=ultralytics 自动选)
 #   DEVICE=cpu bash scripts/launch_all.sh      # 强制使用 CPU
-#   PERF=1 bash scripts/launch_all.sh          # 性能优先: 关闭 HUD/仪表盘/结果落盘 (默认 1)
+#   LOG_TO_DISK=0 bash scripts/launch_all.sh   # 禁止写盘日志 (默认)
+#   LOG_TO_DISK=1 LOG_DIR=/tmp/launch_logs bash scripts/launch_all.sh  # 写到临时盘
 #
 # 三/四个独立终端窗口:
 #   1_px4_sitl         — PX4 + Gazebo server (含自带 GUI)
@@ -35,21 +36,28 @@ CONF="${CONF:-0.15}"
 IMGSZ="${IMGSZ:-480}"
 SKIP="${SKIP:-1}"
 DEVICE="${DEVICE:-}"
-PERF="${PERF:-1}"
-LOG_DIR="$PROJ_ROOT/demo/ros2_outputs/launch_logs"
+LOG_TO_DISK="${LOG_TO_DISK:-}"
+LOG_DIR="${LOG_DIR:-}"
+
+if [[ -z "$LOG_TO_DISK" ]]; then
+    LOG_TO_DISK="0"
+fi
+
+if [[ -z "$LOG_DIR" ]]; then
+    if [[ "$LOG_TO_DISK" == "1" ]]; then
+        LOG_DIR="$PROJ_ROOT/demo/ros2_outputs/launch_logs"
+    else
+        LOG_DIR="/tmp/2026cv_launch_logs"
+    fi
+fi
+
 mkdir -p "$LOG_DIR"
 
-if [[ "$PERF" == "1" ]]; then
-    ENABLE_HUD="false"
-    ENABLE_DASHBOARD="false"
-    USE_RICH="false"
-    RECORD_RESULTS="false"
-else
-    ENABLE_HUD="true"
-    ENABLE_DASHBOARD="true"
-    USE_RICH="true"
-    RECORD_RESULTS="true"
-fi
+# 默认始终开启 HUD/仪表盘/结果记录，便于实时观察状态。
+ENABLE_HUD="true"
+ENABLE_DASHBOARD="true"
+USE_RICH="true"
+RECORD_RESULTS="true"
 
 # ---- 选择终端模拟器 ----------------------------------------------------------
 TERM_CMD=""
@@ -63,9 +71,15 @@ spawn() {
     local title="$1"; shift
     local logfile="$LOG_DIR/${title}.log"
     local cmd="$*"
-    # 始终把 stdout/stderr tee 到日志, 方便派发失败时排查
-    local wrapped="echo '== $title =='; { $cmd; } 2>&1 | tee '$logfile'; rc=\${PIPESTATUS[0]}; echo; echo \"[exit] $title rc=\$rc, 日志: $logfile\"; echo '按回车关闭窗口'; read"
-    echo "[launch_all] -> $title  (log: $logfile)"
+    local wrapped
+    if [[ "$LOG_TO_DISK" == "1" ]]; then
+        # 调试模式写盘日志; 性能模式可关闭以避免外置盘持续高温写入。
+        wrapped="echo '== $title =='; { $cmd; } 2>&1 | tee '$logfile'; rc=\${PIPESTATUS[0]}; echo; echo \"[exit] $title rc=\$rc, 日志: $logfile\"; echo '按回车关闭窗口'; read"
+        echo "[launch_all] -> $title  (log: $logfile)"
+    else
+        wrapped="echo '== $title =='; { $cmd; }; rc=\$?; echo; echo \"[exit] $title rc=\$rc\"; echo '按回车关闭窗口'; read"
+        echo "[launch_all] -> $title  (disk log: off)"
+    fi
     case "$TERM_CMD" in
         gnome-terminal)
             gnome-terminal --title="$title" -- bash -lc "$wrapped" >/dev/null 2>&1 &
@@ -75,7 +89,11 @@ spawn() {
             ;;
         *)
             echo "[launch_all]   (无终端模拟器, 后台运行)"
-            nohup bash -lc "$cmd" > "$logfile" 2>&1 &
+            if [[ "$LOG_TO_DISK" == "1" ]]; then
+                nohup bash -lc "$cmd" > "$logfile" 2>&1 &
+            else
+                nohup bash -lc "$cmd" > /dev/null 2>&1 &
+            fi
             ;;
     esac
 }
@@ -118,9 +136,9 @@ cat <<EOF
   IMGSZ       = $IMGSZ
     SKIP        = $SKIP
     DEVICE      = ${DEVICE:-auto}
-    PERF        = $PERF
   WITH_MISSION= $WITH_MISSION
   EXTRA_GUI   = $EXTRA_GUI
+    LOG_TO_DISK = $LOG_TO_DISK
   日志目录    = $LOG_DIR
   终端        = ${TERM_CMD:-后台 (无窗口)}
 ============================================================
