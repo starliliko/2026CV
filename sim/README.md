@@ -21,7 +21,7 @@ sim/
 ```bash
 # 1. 启动 PX4 SITL（Gazebo baylands）
 cd ~/PX4/PX4-Autopilot
-PX4_GZ_WORLD=baylands make px4_sitl gz_x500_gimbal
+GZ_CONFIG_PATH=/usr/share/gz PX4_GZ_WORLD=baylands make px4_sitl gz_x500_gimbal
 
 # 2. 在 Gazebo 已运行的世界里 spawn 目标
 python3 sim/launch/spawn_targets.py --world baylands --seed 42
@@ -34,6 +34,16 @@ ros2 launch low_altitude_bringup dataset_collect.launch.py \
 python3 sim/missions/random_waypoints.py --duration 2400 --seed 7
 ```
 
+如果看到 `The 'gz' command provides...` 且一直 `Waiting for Gazebo world`，通常是
+`gz sim` 子命令没有被发现。先检查：
+
+```bash
+GZ_CONFIG_PATH=/usr/share/gz gz --commands | grep -E '^  sim:'
+```
+
+若有输出，再启动 PX4。没有输出时请先 `source scripts/activate_env.sh`，它会自动修复
+`GZ_CONFIG_PATH` 的优先级。
+
 完整流程见 [docs/SIM_TRAINING_PIPELINE.md](../docs/SIM_TRAINING_PIPELINE.md)。
 
 ## 修改类别 / 模型 / 区域
@@ -44,4 +54,3 @@ python3 sim/missions/random_waypoints.py --duration 2400 --seed 7
 - 改区域：`spawn_area.{x_range, y_range}`；`boat` 使用 `water_z`。
 
 改完 yaml，spawn_targets / dataset_collector / build_yolo_dataset 都会自动跟进。
-4. 相机话题或图像流获取方法

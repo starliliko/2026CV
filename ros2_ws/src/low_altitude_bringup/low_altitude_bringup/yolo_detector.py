@@ -15,7 +15,13 @@ from typing import Any
 import numpy as np
 import rclpy
 from rclpy.node import Node
-from rclpy.qos import qos_profile_sensor_data
+from rclpy.qos import (
+    QoSDurabilityPolicy,
+    QoSHistoryPolicy,
+    QoSProfile,
+    QoSReliabilityPolicy,
+    qos_profile_sensor_data,
+)
 from sensor_msgs.msg import Image
 from std_msgs.msg import String
 
@@ -97,8 +103,17 @@ class YoloDetector(Node):
         self._annotated_publisher = self.create_publisher(
             Image, self._annotated_image_topic, qos_profile_sensor_data
         )
+        # Image input: best_effort + depth=1 so DDS itself drops old frames if
+        # we are slower than the publisher (works in concert with the upstream
+        # image_throttle relay node).
+        image_sub_qos = QoSProfile(
+            reliability=QoSReliabilityPolicy.BEST_EFFORT,
+            history=QoSHistoryPolicy.KEEP_LAST,
+            depth=1,
+            durability=QoSDurabilityPolicy.VOLATILE,
+        )
         self.create_subscription(
-            Image, self._image_topic, self._image_callback, qos_profile_sensor_data
+            Image, self._image_topic, self._image_callback, image_sub_qos
         )
 
         self._load_model()

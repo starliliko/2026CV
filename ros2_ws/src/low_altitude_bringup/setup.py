@@ -37,6 +37,7 @@ setup(
         "console_scripts": [
             "gz_camera_bridge = low_altitude_bringup.gz_camera_bridge:main",
             "image_snapshot = low_altitude_bringup.image_snapshot:main",
+            "image_throttle = low_altitude_bringup.image_throttle:main",
             "yolo_detector = low_altitude_bringup.yolo_detector:main",
             "dataset_collector = low_altitude_bringup.dataset_collector:main",
         ],

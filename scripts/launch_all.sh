@@ -4,8 +4,8 @@
 # 必须在 Ubuntu 系统终端 (Ctrl+Alt+T) 中运行, 不要在 VS Code Snap 终端运行.
 #
 # 用法:
-#   bash scripts/launch_all.sh                 # 默认 world=default
-#   WORLD=baylands bash scripts/launch_all.sh  # 切换 baylands 世界
+#   bash scripts/launch_all.sh                 # 默认 world=baylands_2026cv (自定义场景)
+#   WORLD=baylands bash scripts/launch_all.sh  # 显式切换官方 baylands 世界
 #   WITH_MISSION=1 bash scripts/launch_all.sh  # 额外开窗口跑随机航点任务
 #   EXTRA_GUI=1 bash scripts/launch_all.sh     # 在 PX4 自带 GUI 之外再开一个 gz sim -g
 #   CONF=0.25 bash scripts/launch_all.sh       # 自定义 YOLO 置信度阈值 (默认 0.15)
@@ -15,6 +15,14 @@
 #   DEVICE=cpu bash scripts/launch_all.sh      # 强制使用 CPU
 #   LOG_TO_DISK=0 bash scripts/launch_all.sh   # 禁止写盘日志 (默认)
 #   LOG_TO_DISK=1 LOG_DIR=/tmp/launch_logs bash scripts/launch_all.sh  # 写到临时盘
+#
+# 中间缓冲区 (image_throttle, 默认开启, 抑制 RAM 增长):
+#   THROTTLE_HZ=5             # 节点重发频率 (默认 5Hz, 调高到 30 等于不限流)
+#   THROTTLE_W=320 THROTTLE_H=240   # 重发前缩放到小分辨率 (默认 0,0 = 不缩放)
+#
+# 自定义 Gazebo 资源覆盖层 (默认开启, 不改官方文件):
+#   USE_CUSTOM_GZ=1 bash scripts/launch_all.sh
+#   CUSTOM_GZ_ROOT=/home/libo/2026CV/sim/custom_gz bash scripts/launch_all.sh
 #
 # 三/四个独立终端窗口:
 #   1_px4_sitl         — PX4 + Gazebo server (含自带 GUI)
@@ -29,7 +37,9 @@ set -e
 
 PROJ_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PX4_DIR="${PX4_DIR:-$HOME/PX4/PX4-Autopilot}"
-WORLD="${WORLD:-default}"
+USE_CUSTOM_GZ="${USE_CUSTOM_GZ:-1}"
+CUSTOM_GZ_ROOT="${CUSTOM_GZ_ROOT:-$PROJ_ROOT/sim/custom_gz}"
+WORLD="${WORLD:-}"
 WITH_MISSION="${WITH_MISSION:-0}"
 EXTRA_GUI="${EXTRA_GUI:-0}"
 CONF="${CONF:-0.15}"
@@ -38,6 +48,22 @@ SKIP="${SKIP:-1}"
 DEVICE="${DEVICE:-}"
 LOG_TO_DISK="${LOG_TO_DISK:-}"
 LOG_DIR="${LOG_DIR:-}"
+
+# image_throttle (中间缓冲区) 参数
+THROTTLE_HZ="${THROTTLE_HZ:-5.0}"
+THROTTLE_W="${THROTTLE_W:-0}"
+THROTTLE_H="${THROTTLE_H:-0}"
+
+CUSTOM_GZ_MODELS="$CUSTOM_GZ_ROOT/models"
+CUSTOM_GZ_WORLDS="$CUSTOM_GZ_ROOT/worlds"
+
+if [[ -z "$WORLD" ]]; then
+    if [[ "$USE_CUSTOM_GZ" == "1" ]]; then
+        WORLD="baylands_2026cv"
+    else
+        WORLD="default"
+    fi
+fi
 
 if [[ -z "$LOG_TO_DISK" ]]; then
     LOG_TO_DISK="0"
@@ -101,6 +127,47 @@ spawn() {
 # ---- 前置检查 ---------------------------------------------------------------
 [[ -d "$PX4_DIR" ]] || { echo "ERROR: PX4 目录不存在: $PX4_DIR"; exit 1; }
 
+if [[ "$USE_CUSTOM_GZ" == "1" ]]; then
+    [[ -d "$CUSTOM_GZ_MODELS" ]] || { echo "ERROR: 自定义模型目录不存在: $CUSTOM_GZ_MODELS"; exit 1; }
+    [[ -d "$CUSTOM_GZ_WORLDS" ]] || { echo "ERROR: 自定义场景目录不存在: $CUSTOM_GZ_WORLDS"; exit 1; }
+fi
+
+# ---- 自定义资源注入 PX4 目录 (symlink 方式, 不修改任何官方文件) ----------------
+# 原因: PX4 在 etc/init.d-posix/rcS 里把世界路径硬编码到
+#   $PX4_DIR/Tools/simulation/gz/worlds/<WORLD>.sdf
+# 而模型则按 GZ_SIM_RESOURCE_PATH 顺序检索. 为了让 PX4 找到我们的自定义
+# baylands_2026cv 世界, 同时让 x500_gimbal/gimbal 用我们自己的 320x240@10Hz
+# 副本, 在启动前为每个自定义资产在 PX4 目录里建立 symlink. symlink 是新建文件,
+# 不会覆盖官方 default.sdf / baylands.sdf 等原版.
+inject_symlink() {
+    local src="$1"
+    local dst="$2"
+    if [[ ! -e "$src" ]]; then
+        return 0
+    fi
+    if [[ -L "$dst" ]]; then
+        ln -sfn "$src" "$dst"
+    elif [[ -e "$dst" ]]; then
+        echo "[launch_all] WARN: $dst 是官方真实文件, 跳过 symlink (避免覆盖). 改名你的自定义资产即可绕过."
+    else
+        ln -s "$src" "$dst"
+    fi
+}
+
+if [[ "$USE_CUSTOM_GZ" == "1" ]]; then
+    PX4_WORLDS_DIR="$PX4_DIR/Tools/simulation/gz/worlds"
+    mkdir -p "$PX4_WORLDS_DIR"
+
+    # 只为 worlds 建 symlink (PX4 启动脚本硬编码这个目录).
+    # 模型通过 GZ_SIM_RESOURCE_PATH 前置就能命中我们的副本, 无需动 PX4 模型目录.
+    for w in "$CUSTOM_GZ_WORLDS"/*.sdf; do
+        [[ -e "$w" ]] || continue
+        inject_symlink "$w" "$PX4_WORLDS_DIR/$(basename "$w")"
+    done
+    echo "[launch_all] 自定义世界 symlink 注入完成: $PX4_WORLDS_DIR/"
+    echo "[launch_all] 自定义模型走 GZ_SIM_RESOURCE_PATH 前置, 不触碰 PX4 模型目录."
+fi
+
 if [[ ! -f "$PROJ_ROOT/ros2_ws/install/setup.bash" ]]; then
     echo "[launch_all] ros2_ws 未构建, 现在构建..."
     (cd "$PROJ_ROOT/ros2_ws" && source /opt/ros/jazzy/setup.bash && \
@@ -126,6 +193,16 @@ fi
 # 根据 world 拼出 gz 相机话题
 GZ_IMG="/world/${WORLD}/model/x500_gimbal_0/link/camera_link/sensor/camera/image"
 
+if [[ "$USE_CUSTOM_GZ" == "1" ]]; then
+    if [[ -n "${GZ_SIM_RESOURCE_PATH:-}" ]]; then
+        GZ_SIM_RESOURCE_PATH_EFFECTIVE="$CUSTOM_GZ_MODELS:$CUSTOM_GZ_WORLDS:$GZ_SIM_RESOURCE_PATH"
+    else
+        GZ_SIM_RESOURCE_PATH_EFFECTIVE="$CUSTOM_GZ_MODELS:$CUSTOM_GZ_WORLDS"
+    fi
+else
+    GZ_SIM_RESOURCE_PATH_EFFECTIVE="${GZ_SIM_RESOURCE_PATH:-}"
+fi
+
 cat <<EOF
 ============================================================
 2026CV 一键启动
@@ -141,11 +218,14 @@ cat <<EOF
     LOG_TO_DISK = $LOG_TO_DISK
   日志目录    = $LOG_DIR
   终端        = ${TERM_CMD:-后台 (无窗口)}
+  THROTTLE    = ${THROTTLE_HZ} Hz, resize=${THROTTLE_W}x${THROTTLE_H} (0=passthrough)
+    USE_CUSTOM_GZ = $USE_CUSTOM_GZ
+    CUSTOM_GZ_ROOT= $CUSTOM_GZ_ROOT
 ============================================================
 EOF
 
 # ---- 1) PX4 SITL + Gazebo server (含自带 GUI) -------------------------------
-spawn "1_px4_sitl" "cd '$PX4_DIR' && export GZ_CONFIG_PATH=/usr/share/gz && PX4_GZ_WORLD='$WORLD' make px4_sitl gz_x500_gimbal"
+spawn "1_px4_sitl" "cd '$PX4_DIR' && export GZ_CONFIG_PATH=/usr/share/gz && export GZ_SIM_RESOURCE_PATH='$GZ_SIM_RESOURCE_PATH_EFFECTIVE' && PX4_GZ_WORLD='$WORLD' make px4_sitl gz_x500_gimbal"
 
 # ---- 2) (可选) 额外 Gazebo GUI 客户端 ---------------------------------------
 if [[ "$EXTRA_GUI" == "1" ]]; then
@@ -164,6 +244,7 @@ fi
 ROS_CMD="source '$PROJ_ROOT/scripts/activate_env.sh' && cd '$PROJ_ROOT' && \
 ros2 launch low_altitude_bringup perception_yolo.launch.py \
     gz_image_topic:='$GZ_IMG' confidence:='$CONF' imgsz:='$IMGSZ' report_every_n_frames:='$SKIP'${DEVICE_ARG} \
+    throttle_hz:='$THROTTLE_HZ' throttle_width:='$THROTTLE_W' throttle_height:='$THROTTLE_H' \
     enable_hud:='$ENABLE_HUD' enable_dashboard:='$ENABLE_DASHBOARD' use_rich:='$USE_RICH' \
     record_results:='$RECORD_RESULTS'"
 spawn "3_ros2_perception" "$ROS_CMD"

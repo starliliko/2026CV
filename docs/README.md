@@ -8,6 +8,7 @@
 4. [ROS 2 进度恢复计划](./ROS2_RESUME_PLAN.md)
 5. [仿真训练 → 部署端到端流程](./SIM_TRAINING_PIPELINE.md)
 6. [系统卡死排障结论（内存与 swap）](./SYSTEM_FREEZE_ROOT_CAUSE.md)
+7. [系统卡死端到端复盘（发现到解决）](./SYSTEM_FREEZE_END_TO_END_REPORT.md)
 
 ## 使用建议
 

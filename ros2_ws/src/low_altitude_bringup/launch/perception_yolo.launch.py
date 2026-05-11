@@ -15,6 +15,26 @@ def generate_launch_description() -> LaunchDescription:
         ),
     )
     image_topic_arg = DeclareLaunchArgument("image_topic", default_value="/camera/image_raw")
+    throttled_image_topic_arg = DeclareLaunchArgument(
+        "throttled_image_topic", default_value="/camera/image_throttled",
+        description="Output of the latest-only image relay; yolo_detector subscribes here.",
+    )
+    enable_throttle_arg = DeclareLaunchArgument(
+        "enable_throttle", default_value="true",
+        description="(reserved) image_throttle is always launched; flag kept for compatibility.",
+    )
+    throttle_hz_arg = DeclareLaunchArgument(
+        "throttle_hz", default_value="5.0",
+        description="Republish rate (Hz) of the throttle node.",
+    )
+    throttle_width_arg = DeclareLaunchArgument(
+        "throttle_width", default_value="0",
+        description="Resize width before republish. 0 = passthrough.",
+    )
+    throttle_height_arg = DeclareLaunchArgument(
+        "throttle_height", default_value="0",
+        description="Resize height before republish. 0 = passthrough.",
+    )
     annotated_image_topic_arg = DeclareLaunchArgument(
         "annotated_image_topic", default_value="/camera/annotated"
     )
@@ -91,7 +111,7 @@ def generate_launch_description() -> LaunchDescription:
         output="screen",
         parameters=[
             {
-                "image_topic": LaunchConfiguration("image_topic"),
+                "image_topic": LaunchConfiguration("throttled_image_topic"),
                 "detection_topic": "/detections/yolo",
                 "annotated_image_topic": LaunchConfiguration("annotated_image_topic"),
                 "model_path": LaunchConfiguration("model_path"),
@@ -117,10 +137,37 @@ def generate_launch_description() -> LaunchDescription:
         ],
     )
 
+    throttle_node = Node(
+        package="low_altitude_bringup",
+        executable="image_throttle",
+        name="image_throttle",
+        output="screen",
+        parameters=[
+            {
+                "input_topic": LaunchConfiguration("image_topic"),
+                "output_topic": LaunchConfiguration("throttled_image_topic"),
+                "republish_hz": ParameterValue(
+                    LaunchConfiguration("throttle_hz"), value_type=float
+                ),
+                "resize_width": ParameterValue(
+                    LaunchConfiguration("throttle_width"), value_type=int
+                ),
+                "resize_height": ParameterValue(
+                    LaunchConfiguration("throttle_height"), value_type=int
+                ),
+            }
+        ],
+    )
+
     return LaunchDescription(
         [
             bridge_config_arg,
             image_topic_arg,
+            throttled_image_topic_arg,
+            enable_throttle_arg,
+            throttle_hz_arg,
+            throttle_width_arg,
+            throttle_height_arg,
             annotated_image_topic_arg,
             gz_image_topic_arg,
             model_path_arg,
@@ -139,6 +186,7 @@ def generate_launch_description() -> LaunchDescription:
             results_dir_arg,
             summary_interval_sec_arg,
             bridge_launch,
+            throttle_node,
             yolo_detector,
         ]
     )

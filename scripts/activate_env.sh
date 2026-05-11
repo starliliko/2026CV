@@ -46,5 +46,19 @@ else
     echo "[activate_env] INFO: venv 尚未创建，运行 'bash vision/setup_train_env.sh'"
 fi
 
+# 4. Gazebo 命令发现修复
+# 某些 ROS Jazzy 环境会把 GZ_CONFIG_PATH 覆盖为 vendor 路径，导致 `gz sim`
+# 子命令不可见。把 /usr/share/gz 放在最前，保证 PX4/Gazebo world 可启动。
+if [[ -d /usr/share/gz ]]; then
+    case ":${GZ_CONFIG_PATH:-}:" in
+        *":/usr/share/gz:"*)
+            ;;
+        *)
+            export GZ_CONFIG_PATH="/usr/share/gz${GZ_CONFIG_PATH:+:$GZ_CONFIG_PATH}"
+            ;;
+    esac
+fi
+
 echo "[activate_env] PROJ_ROOT=$PROJ_ROOT"
 echo "[activate_env] ROS_DISTRO=${ROS_DISTRO:-unset}  python=$(command -v python || echo none)"
+echo "[activate_env] GZ_CONFIG_PATH=${GZ_CONFIG_PATH:-unset}"
