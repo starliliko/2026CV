@@ -268,8 +268,8 @@
           <image>
             <format>R8G8B8</format>
             <format>R8G8B8</format>
-            <width>640</width>
-            <height>360</height>
+            <width>960</width>
+            <height>540</height>
           </image>
           <clip>
             <near>0.05</near>

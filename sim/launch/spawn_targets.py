@@ -157,7 +157,7 @@ def _spawn_one(world: str, target: SpawnedTarget, dry_run: bool) -> bool:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--world", default="baylands")
+    parser.add_argument("--world", default="baylands_2026cv")
     parser.add_argument(
         "--config",
         default=str(Path(__file__).resolve().parents[1] / "configs" / "target_models.yaml"),
