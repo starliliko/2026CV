@@ -41,8 +41,8 @@ PX4 源码不包含在本仓库中，默认位置为：
 ## 快速开始
 
 ```bash
-git clone https://github.com/starliliko/2026CV.git
-cd 2026CV
+git clone https://github.com/starliliko/px4-ros2-yolo-simulation.git
+cd px4-ros2-yolo-simulation
 
 # 创建 Ubuntu 推理环境
 bash vision/setup_infer_env.sh

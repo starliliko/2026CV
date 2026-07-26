@@ -28,8 +28,8 @@ PX4_DIR=/path/to/PX4-Autopilot bash scripts/launch_all.sh
 ## Ubuntu 推理环境
 
 ```bash
-git clone https://github.com/starliliko/2026CV.git
-cd 2026CV
+git clone https://github.com/starliliko/px4-ros2-yolo-simulation.git
+cd px4-ros2-yolo-simulation
 
 bash vision/setup_infer_env.sh
 source vision/.venv-train/bin/activate
