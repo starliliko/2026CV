@@ -14,8 +14,8 @@ Run example::
 
     ros2 run low_altitude_bringup dataset_collector \\
         --ros-args \\
-        -p manifest_path:=/home/libo/2026CV/sim/runtime/spawned_latest.json \\
-        -p output_dir:=/home/libo/2026CV/dataset/sim_v1 \\
+        -p manifest_path:="$CV2026_ROOT/sim/runtime/spawned_latest.json" \\
+        -p output_dir:="$CV2026_ROOT/dataset/sim_v1" \\
         -p capture_hz:=2.0 \\
         -p target_total_frames:=5000
 

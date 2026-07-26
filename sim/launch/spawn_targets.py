@@ -1,10 +1,4 @@
-# 终端 B
-source /opt/ros/jazzy/setup.bash
-gz topic -l | grep camera
-gz topic -e -t /world/baylands/model/x500_gimbal_0/link/camera_link/sensor/camera/image -n 1 | head -5# 终端 B
-source /opt/ros/jazzy/setup.bash
-gz topic -l | grep camera
-gz topic -e -t /world/baylands/model/x500_gimbal_0/link/camera_link/sensor/camera/image -n 1 | head -5#!/usr/bin/env python3
+#!/usr/bin/env python3
 """Randomly spawn perception targets into a running Gazebo Harmonic world.
 
 Usage (from a sourced ROS 2 + Gazebo environment):

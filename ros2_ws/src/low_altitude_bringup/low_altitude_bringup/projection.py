@@ -1,10 +1,7 @@
-"""Vendored copy of ``vision.dataset.projection``.
+"""Project 3D target boxes into camera images.
 
-Kept inside the ROS package so the dataset collector works in both the
-source-tree and ``colcon install`` layouts without depending on
-``vision/`` being on PYTHONPATH. If you fix a bug here, also update the
-canonical copy at ``vision/dataset/projection.py`` (and re-run
-``vision/dataset/test_projection.py``).
+The implementation lives in the ROS package so the dataset collector works
+in both the source tree and a ``colcon install`` layout.
 """
 
 from __future__ import annotations

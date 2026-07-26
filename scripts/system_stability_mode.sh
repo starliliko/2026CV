@@ -3,6 +3,7 @@ set -euo pipefail
 
 MODE="${1:-}"
 GPU_FLAG="${2:-}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 SYSCTL_CONF="/etc/sysctl.d/99-2026cv-stability.conf"
 JOURNALD_DIR="/etc/systemd/journald.conf.d"
@@ -91,7 +92,7 @@ set_power_profile() {
 }
 
 apply_gpu_stability() {
-    local script="/home/libo/2026CV/scripts/apply_gpu_stability_mode.sh"
+    local script="$SCRIPT_DIR/apply_gpu_stability_mode.sh"
     if [[ -x "$script" || -f "$script" ]]; then
         if [[ "$GPU_FLAG" == "--disable-gsp" ]]; then
             bash "$script" --disable-gsp
@@ -104,7 +105,7 @@ apply_gpu_stability() {
 }
 
 revert_gpu_stability() {
-    local script="/home/libo/2026CV/scripts/revert_gpu_stability_mode.sh"
+    local script="$SCRIPT_DIR/revert_gpu_stability_mode.sh"
     if [[ -x "$script" || -f "$script" ]]; then
         bash "$script"
     else

@@ -8,6 +8,7 @@ package.
 from __future__ import annotations
 
 import json
+import os
 import pathlib
 import time
 from typing import Any
@@ -40,6 +41,11 @@ try:
     from ultralytics import YOLO
 except Exception:  # pragma: no cover
     YOLO = None
+
+
+def _default_output_dir() -> str:
+    project_root = pathlib.Path(os.environ.get("CV2026_ROOT", pathlib.Path.cwd()))
+    return str(project_root / "demo" / "ros2_outputs")
 
 
 def _normalize_model_path(raw_path: str) -> str:
@@ -167,7 +173,7 @@ class YoloDetector(Node):
         self.declare_parameter("publish_annotated", True)
         self.declare_parameter("save_annotated", False)
         self.declare_parameter("save_every_n_frames", 30)
-        self.declare_parameter("annotated_dir", "/home/libo/2026CV/demo/ros2_outputs")
+        self.declare_parameter("annotated_dir", _default_output_dir())
         self.declare_parameter("publish_startup_status", True)
         self.declare_parameter("heartbeat_interval_sec", 5.0)
         self.declare_parameter("log_every_n_status", 1)
@@ -177,7 +183,7 @@ class YoloDetector(Node):
         self.declare_parameter("dashboard_refresh_hz", 2.0)
         self.declare_parameter("window_size", 30)
         self.declare_parameter("record_results", True)
-        self.declare_parameter("results_dir", "/home/libo/2026CV/demo/ros2_outputs")
+        self.declare_parameter("results_dir", _default_output_dir())
         self.declare_parameter("summary_interval_sec", 5.0)
 
     def _read_parameters(self) -> None:
@@ -220,7 +226,7 @@ class YoloDetector(Node):
     def _load_model(self) -> None:
         if YOLO is None:
             self._model_error = (
-                "ultralytics is not installed in WSL. Install runtime dependencies "
+                "ultralytics is not installed. Install runtime dependencies "
                 "before using yolo_detector."
             )
             self.get_logger().warning(self._model_error)

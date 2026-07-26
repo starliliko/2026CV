@@ -23,6 +23,7 @@
 set -euo pipefail
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+project_root="$(cd "$here/.." && pwd)"
 venv="$here/.venv-train"
 
 if [[ "${RECREATE:-0}" == "1" && -d "$venv" ]]; then
@@ -96,5 +97,5 @@ This venv is for ROS 2 inference (yolo_detector node).
 Training is done on Windows — see vision/setup_train_env.ps1.
 After training, copy the resulting best.pt into ros2_ws/ and launch:
     ros2 launch low_altitude_bringup perception_yolo.launch.py \\
-        model_path:=/home/libo/2026CV/ros2_ws/yolov8s-sim-v1.pt
+        model_path:=$project_root/ros2_ws/yolov8s-sim-v1.pt
 EOF

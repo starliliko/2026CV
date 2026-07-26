@@ -1,13 +1,19 @@
+import os
+
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import EnvironmentVariable, LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
 from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description() -> LaunchDescription:
+    project_root = EnvironmentVariable("CV2026_ROOT", default_value=os.getcwd())
+    default_results_dir = PathJoinSubstitution(
+        [project_root, "demo", "ros2_outputs"]
+    )
     bridge_config_arg = DeclareLaunchArgument(
         "bridge_config",
         default_value=PathJoinSubstitution(
@@ -56,7 +62,7 @@ def generate_launch_description() -> LaunchDescription:
         description="Ultralytics device. '' = auto, '0' = first GPU, 'cpu' = force CPU.",
     )
     annotated_dir_arg = DeclareLaunchArgument(
-        "annotated_dir", default_value="/home/libo/2026CV/demo/ros2_outputs"
+        "annotated_dir", default_value=default_results_dir
     )
     heartbeat_interval_sec_arg = DeclareLaunchArgument(
         "heartbeat_interval_sec", default_value="5.0"
@@ -84,7 +90,7 @@ def generate_launch_description() -> LaunchDescription:
         description="Append per-frame detections to JSONL and refresh summary.json.",
     )
     results_dir_arg = DeclareLaunchArgument(
-        "results_dir", default_value="/home/libo/2026CV/demo/ros2_outputs",
+        "results_dir", default_value=default_results_dir,
         description="Directory where detections.jsonl and summary.json are written.",
     )
     summary_interval_sec_arg = DeclareLaunchArgument(

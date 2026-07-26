@@ -17,6 +17,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 fi
 
 PROJ_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+export CV2026_ROOT="$PROJ_ROOT"
 
 # 1. ROS 2 Jazzy
 if [[ -f /opt/ros/jazzy/setup.bash ]]; then

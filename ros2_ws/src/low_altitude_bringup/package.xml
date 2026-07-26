@@ -3,7 +3,7 @@
   <name>low_altitude_bringup</name>
   <version>0.1.0</version>
   <description>ROS 2 bringup utilities for the 2026CV low-altitude PX4 and Gazebo project.</description>
-  <maintainer email="student@example.com">2026CV Team</maintainer>
+  <maintainer email="starliliko@users.noreply.github.com">starliliko</maintainer>
   <license>MIT</license>
 
   <buildtool_depend>ament_python</buildtool_depend>
@@ -14,6 +14,7 @@
   <depend>sensor_msgs</depend>
   <depend>rosgraph_msgs</depend>
   <depend>std_msgs</depend>
+  <exec_depend>python3-numpy</exec_depend>
   <exec_depend>python3-pil</exec_depend>
 
   <exec_depend>ros_gz_bridge</exec_depend>

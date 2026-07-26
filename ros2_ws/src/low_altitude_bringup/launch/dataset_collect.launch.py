@@ -5,15 +5,18 @@ reads ``manifest_path`` to know what models to track for ground-truth labels
 and writes the (image, label) pairs under ``output_dir``.
 """
 
+import os
+
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import EnvironmentVariable, LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description() -> LaunchDescription:
+    project_root = EnvironmentVariable("CV2026_ROOT", default_value=os.getcwd())
     image_topic_arg = DeclareLaunchArgument("image_topic", default_value="/camera/image_raw")
     camera_info_topic_arg = DeclareLaunchArgument(
         "camera_info_topic", default_value="/camera/camera_info"
@@ -24,10 +27,13 @@ def generate_launch_description() -> LaunchDescription:
     )
     manifest_path_arg = DeclareLaunchArgument(
         "manifest_path",
-        default_value="/home/libo/2026CV/sim/runtime/spawned_latest.json",
+        default_value=PathJoinSubstitution(
+            [project_root, "sim", "runtime", "spawned_latest.json"]
+        ),
     )
     output_dir_arg = DeclareLaunchArgument(
-        "output_dir", default_value="/home/libo/2026CV/dataset/sim_v1"
+        "output_dir",
+        default_value=PathJoinSubstitution([project_root, "dataset", "sim_v1"]),
     )
     capture_hz_arg = DeclareLaunchArgument("capture_hz", default_value="2.0")
     target_total_frames_arg = DeclareLaunchArgument(

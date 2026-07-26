@@ -8,6 +8,8 @@ set -e
 
 PROJ_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 VENV="$PROJ_ROOT/vision/.venv-train"
+MODEL_PATH="${MODEL_PATH:-$PROJ_ROOT/ros2_ws/yolov8n.pt}"
+export MODEL_PATH
 
 if ! command -v nvidia-smi >/dev/null 2>&1; then
     echo "ERROR: 找不到 nvidia-smi. 请先:"
@@ -47,10 +49,14 @@ else:
 PY
 
 echo "[cuda] YOLO GPU 基准 (yolov8n.pt @ imgsz=480)"
+if [[ ! -f "$MODEL_PATH" ]]; then
+    MODEL_PATH="$MODEL_PATH" bash "$PROJ_ROOT/scripts/download_model.sh"
+fi
 python - <<'PY'
 from ultralytics import YOLO
+import os
 import numpy as np, time
-m = YOLO("/home/libo/2026CV/ros2_ws/yolov8n.pt")
+m = YOLO(os.environ["MODEL_PATH"])
 img = (np.random.rand(720, 1280, 3) * 255).astype("uint8")
 m.predict(img, device=0, imgsz=480, verbose=False)  # warmup
 t0 = time.time()

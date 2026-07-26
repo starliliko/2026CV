@@ -22,7 +22,7 @@
 #
 # 自定义 Gazebo 资源覆盖层 (默认开启, 不改官方文件):
 #   USE_CUSTOM_GZ=1 bash scripts/launch_all.sh
-#   CUSTOM_GZ_ROOT=/home/libo/2026CV/sim/custom_gz bash scripts/launch_all.sh
+#   CUSTOM_GZ_ROOT=/path/to/2026CV/sim/custom_gz bash scripts/launch_all.sh
 #
 # 三/四个独立终端窗口:
 #   1_px4_sitl         — PX4 + Gazebo server (含自带 GUI)
@@ -36,6 +36,7 @@
 set -e
 
 PROJ_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+export CV2026_ROOT="$PROJ_ROOT"
 PX4_DIR="${PX4_DIR:-$HOME/PX4/PX4-Autopilot}"
 USE_CUSTOM_GZ="${USE_CUSTOM_GZ:-1}"
 CUSTOM_GZ_ROOT="${CUSTOM_GZ_ROOT:-$PROJ_ROOT/sim/custom_gz}"
@@ -172,6 +173,12 @@ if [[ ! -f "$PROJ_ROOT/ros2_ws/install/setup.bash" ]]; then
     echo "[launch_all] ros2_ws 未构建, 现在构建..."
     (cd "$PROJ_ROOT/ros2_ws" && source /opt/ros/jazzy/setup.bash && \
      colcon build --packages-select low_altitude_bringup --symlink-install)
+fi
+
+if [[ ! -f "$PROJ_ROOT/ros2_ws/yolov8n.pt" ]]; then
+    echo "[launch_all] YOLOv8n 权重不存在，正在下载..."
+    MODEL_PATH="$PROJ_ROOT/ros2_ws/yolov8n.pt" \
+        bash "$PROJ_ROOT/scripts/download_model.sh"
 fi
 
 if env | grep -qE '^SNAP(_|=)'; then

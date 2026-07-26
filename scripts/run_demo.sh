@@ -4,7 +4,11 @@
 #   cd ~/PX4/PX4-Autopilot && PX4_GZ_WORLD=baylands make px4_sitl gz_x500_gimbal
 set -e
 
-WS_ROOT="${WS_ROOT:-/home/libo/2026CV/ros2_ws}"
+PROJ_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+WS_ROOT="${WS_ROOT:-$PROJ_ROOT/ros2_ws}"
+MODEL_PATH="${MODEL_PATH:-$WS_ROOT/yolov8n.pt}"
+RESULTS_DIR="${RESULTS_DIR:-$PROJ_ROOT/demo/ros2_outputs}"
+export CV2026_ROOT="$PROJ_ROOT"
 
 if [ ! -f "$WS_ROOT/install/setup.bash" ]; then
   echo "[run_demo] colcon install not found at $WS_ROOT/install. Building first..."
@@ -12,8 +16,15 @@ if [ ! -f "$WS_ROOT/install/setup.bash" ]; then
    colcon build --packages-select low_altitude_bringup --symlink-install)
 fi
 
-source /opt/ros/jazzy/setup.bash
-source "$WS_ROOT/install/setup.bash"
+# shellcheck disable=SC1091
+source "$PROJ_ROOT/scripts/activate_env.sh"
+
+if [ ! -f "$MODEL_PATH" ]; then
+  echo "[run_demo] Model not found at $MODEL_PATH. Downloading YOLOv8n..."
+  MODEL_PATH="$MODEL_PATH" bash "$PROJ_ROOT/scripts/download_model.sh"
+fi
+
+mkdir -p "$RESULTS_DIR"
 
 cat <<EOF
 [run_demo] Launching: perception_yolo.launch.py
@@ -31,4 +42,8 @@ Make sure PX4 SITL is already running:
 Press Ctrl+C to stop.
 EOF
 
-ros2 launch low_altitude_bringup perception_yolo.launch.py "$@"
+ros2 launch low_altitude_bringup perception_yolo.launch.py \
+  model_path:="$MODEL_PATH" \
+  annotated_dir:="$RESULTS_DIR" \
+  results_dir:="$RESULTS_DIR" \
+  "$@"
