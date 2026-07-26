@@ -1,103 +1,106 @@
-# 2026CV
-# 课堂大作业提交方式
+# 2026CV 低空目标识别仿真系统
 
-以第一组为例子，组长创建目录Group01，然后上传代码、文档和ppt，命名方式如下：
+基于 **PX4、Gazebo Harmonic、ROS 2 Jazzy 和 YOLOv8** 的无人机低空目标识别项目。系统从 Gazebo 相机获取图像，经 ROS 2 桥接和限流后完成目标检测，并输出带 HUD 的图像、结构化检测结果和运行指标。
 
-Group01/code: 完整代码+运行说明文档
+> 当前状态：实时感知链路已完成并可演示；自建数据集训练、长时间稳定性和真实无人机验证仍在继续。
 
-Group01/document：2026CV_G01_汇报总结.PPTX + 2026CV_G01_学号_姓名_大作业.docx
+## 系统链路
 
-（word文档含章节目录，尽可能详尽覆盖ppt汇报的内容和代码说明的内容，鼓励有些新想法。ppt文档里包含组员分工和贡献说明。）
+```mermaid
+flowchart LR
+    PX4["PX4 SITL"] --> GZ["Gazebo Harmonic"]
+    GZ --> CAM["云台相机"]
+    CAM --> BRIDGE["ros_gz_image / ros_gz_bridge"]
+    BRIDGE --> THROTTLE["ROS 2 图像限流"]
+    THROTTLE --> YOLO["YOLOv8 检测节点"]
+    YOLO --> VIEW["标注图像 + HUD"]
+    YOLO --> DATA["JSONL + summary.json"]
+```
 
-截止提交时间：6/30 24:00     
+## 已实现内容
 
-#  课堂作业汇报时间节点
- 
-第一次大作业（  03/23 ）
+- PX4 SITL 与 Gazebo 自定义场景、云台相机模型联调
+- Gazebo 相机图像到 ROS 2 话题的桥接
+- 基于 YOLOv8 的 ROS 2 实时检测节点
+- 图像限流、检测框、FPS、延迟和状态 HUD
+- 终端实时仪表盘与检测结果 JSONL/JSON 记录
+- 随机目标生成、随机航点飞行和仿真数据采集代码
+- Windows GPU 训练环境与 Ubuntu CPU 推理环境分离
+- 针对内存、Swap、磁盘写入和 GPU 驱动问题的稳定性排查
 
-   演示系统搭建
+## 运行环境
 
-第二次大作业（  04/20 ）
+项目使用 Ubuntu 24.04、ROS 2 Jazzy、Gazebo Harmonic 和 PX4 v1.16。Ubuntu 环境保存在移动硬盘中，并通过 VirtualBox 制作和运行；虚拟机无法直接使用宿主机 RTX 4050，因此训练在 Windows 上进行，ROS 2 推理在 Ubuntu 中运行。
 
-   1、研究现状
+PX4 源码不包含在本仓库中，默认位置为：
 
+```text
+~/PX4/PX4-Autopilot
+```
 
-  2、问题定义
+## 快速开始
 
+```bash
+git clone https://github.com/starliliko/2026CV.git
+cd 2026CV
 
-  3、数据采集
+# 创建 Ubuntu 推理环境
+bash vision/setup_infer_env.sh
 
-  
-第三次大作业（  05/18 ）
+# 下载官方 YOLOv8n 基线权重（权重不提交到 Git）
+source vision/.venv-train/bin/activate
+bash scripts/download_model.sh
 
- 
-  4、算法模块
+# 启动 PX4、Gazebo 和 ROS 2 感知链路
+bash scripts/launch_all.sh
+```
 
- 
- 
-  
-第四次大作业（  06/08 ）
+如果 PX4 和 Gazebo 已在其他终端运行，也可以只启动 ROS 2 感知链路：
 
-  
-  5、原型系统
+```bash
+bash scripts/run_demo.sh
+```
 
+查看标注图像：
 
-  6、实验结果
-  
--------------------------------------------------------------
+```bash
+bash scripts/view_annotated.sh
+```
 
-大家可以直接用组号建立目录，然后在相应的目录下工作。
+详细依赖和复现步骤见 [docs/reproduction.md](docs/reproduction.md)。
 
-# 2026CV 可供选择任务：
+## 仓库结构
 
-1.多模态情感识别：基于视觉+音频模态，拓展识别的情绪类别，在MER2025/IEMOCAP 上测试最新算法；
+```text
+.
+├── docs/       # 架构、复现、状态和排障文档
+├── demo/       # 演示说明；运行输出默认不提交
+├── ros2_ws/    # low_altitude_bringup ROS 2 包
+├── sim/        # Gazebo 模型、世界、目标生成和飞行任务
+├── vision/     # YOLO 环境、离线推理、训练和结果汇总
+└── scripts/    # 启动、检查、模型下载和稳定性脚本
+```
 
-2.工业器件识别：在机械臂抓取过程中识别常见工业器件，输出6D参数，包括位置和三维朝向等
+## 当前限制
 
-2.视线跟踪：在视线估计gaze estimation基础上，实现视觉注意跟踪，记录注视点、注视持续时间、首次注视时长及视线转移模式等
+- VirtualBox 环境中只能进行 CPU 推理，实时帧率受主机资源限制。
+- 当前使用官方 `yolov8n.pt` 作为基线；自建仿真数据集和微调模型尚未形成完整可复现实验。
+- 已在现有资源条件下完成约 10 分钟连续运行验证，但尚未完成长时间稳定性测试。
+- 当前仅完成仿真感知链路，尚未在真实无人机上部署，也未实现检测结果驱动的闭环控制。
 
-3.长时微表情识别：在相对比较长的时间里（比如10分钟），对人脸的微表情进行时空分析，或者统计分析，对人的情绪做判断
+最新状态与后续工作见 [docs/status.md](docs/status.md)。
 
-4.特定物体识别：病理图像识别，从当前任务扩展到细胞检测和计数，进一步区分正常细胞和病变细胞
+## 项目贡献与 AI 使用说明
 
-5.场景人流检测：移动摄像头场景下特定人群的检测和计数，扩展到无人机航拍场景下的人体识别与计数
+本项目由本人独立完成，包括仿真环境搭建、ROS 2 通信链路、YOLOv8 推理节点、可视化界面、运行脚本及系统联调。开发过程中使用 AI 工具辅助资料检索、故障分析、代码编写与文档整理；最终设计决策、集成调试和结果验证由本人完成。
 
-6.人体动作识别：复杂康复动作的识别，包括典型康复动作的理解、动作规范性检测和动作计数
+## 文档
 
-7.显著物体检测：无精确标注情况下的显著物体检测问题，扩展到弱监督学习和自监督学习方法
+- [系统架构](docs/architecture.md)
+- [环境与复现](docs/reproduction.md)
+- [当前状态](docs/status.md)
+- [常见问题与排障](docs/troubleshooting.md)
 
-8.低空目标识别：针对低空经济的无人机视觉传感设备，在快速和相对远的距离测试和实现视觉识别算法
+## License
 
-
-
-#  分组+选题：
-
-| 编号 | 组长	|  组员   |                         任务编号 |
-|---|---|---|---| 
-|1|	XXX		|	XXX、XXX  		|				4  |
-|2| 陈培尧 | | 8 |
-
-
-
- 
-
-#  参考链接
-
-yolov7带tracker的仓库: https://github.com/JackWoo0831/Yolov7-tracker
-
-yolo v8: https://github.com/ultralytics/ultralytics?tab=readme-ov-file
-
-yolo v8也提供人体关节点的识别：https://docs.ultralytics.com/tasks/pose/#dataset-format
-
-
-显著物体检测：https://paperswithcode.com/task/salient-object-detection 
-
-人体动作识别：https://github.com/liutiel/AICoacher
-
-车道线检测：https://github.com/liuruijin17/LSTR
-
-疲劳度检测：见目录下代码
-
-机器人定位导航：http://wiki.ros.org/cn
-
-Adaboost： https://cloud.tencent.com/developer/article/17
+[MIT](LICENSE)
